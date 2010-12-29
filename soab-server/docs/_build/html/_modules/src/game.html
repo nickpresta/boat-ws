@@ -1,0 +1,306 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>src.game &mdash; Snakes On A Boat v2.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Snakes On A Boat v2.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../../index.html">Snakes On A Boat v2.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for src.game</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">elixir</span>
+<span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">choice</span>
+<span class="kn">import</span> <span class="nn">sqlalchemy</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">from</span> <span class="nn">twisted.internet</span> <span class="kn">import</span> <span class="n">reactor</span>
+<span class="kn">from</span> <span class="nn">twisted.python</span> <span class="kn">import</span> <span class="n">log</span>
+
+<span class="kn">from</span> <span class="nn">attack_controller</span> <span class="kn">import</span> <span class="n">AttackController</span>
+<span class="kn">from</span> <span class="nn">io_controller</span> <span class="kn">import</span> <span class="n">IOController</span>
+<span class="kn">from</span> <span class="nn">movement_controller</span> <span class="kn">import</span> <span class="n">MovementController</span>
+<span class="kn">from</span> <span class="nn">models</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">player</span> <span class="kn">import</span> <span class="n">Player</span>
+<span class="kn">import</span> <span class="nn">settings</span>
+
+<span class="n">elixir</span><span class="o">.</span><span class="n">setup_all</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Game"><a class="viewcode-back" href="../../index.html#src.game.Game">[docs]</a><span class="k">class</span> <span class="nc">Game</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; The Game class is responsible for delegating tasks to the appropriate controllers as well as storing Player information &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">map</span><span class="p">,</span> <span class="n">max_players</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; We initialize an action map that we use to automatically call the methods based on the attacks &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actions</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;fireBroadside&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fire_broadside</span><span class="p">,</span>
+                        <span class="s">&#39;changeSpeed&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_change_speed</span><span class="p">,</span>
+                        <span class="s">&#39;changeHeading&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_change_heading</span><span class="p">,</span>
+                        <span class="s">&#39;gameSurrender&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_game_surrender</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_timeout</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="c"># in seconds</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">active_players</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inactive_players</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">all_ships</span> <span class="o">=</span> <span class="n">Ship</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">orm</span><span class="o">.</span><span class="n">exc</span><span class="o">.</span><span class="n">NoResultFound</span><span class="p">:</span>
+            <span class="c"># Create a single default ship</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">all_ships</span> <span class="o">=</span> <span class="p">[</span><span class="n">Ship</span><span class="p">(</span><span class="n">hit_points</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">max_hit_points</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">max_speed</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">num_cannons</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                <span class="n">ship_type</span><span class="o">=</span><span class="n">ShipType</span><span class="o">.</span><span class="n">CORVETTE</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">u&quot;HMS Surprise&quot;</span><span class="p">,</span>
+                <span class="n">max_theta</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span> <span class="n">max_ratio</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">turn_radius_factor</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="n">sails</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)]</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">map</span> <span class="o">=</span> <span class="n">Map</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="nb">map</span><span class="p">)</span><span class="o">.</span><span class="n">one</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">orm</span><span class="o">.</span><span class="n">exc</span><span class="o">.</span><span class="n">NoResultFound</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">map</span> <span class="o">=</span> <span class="n">Map</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">u&quot;DEFAULT&quot;</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">wind_speed</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">wind_dir</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">io_controller</span> <span class="o">=</span> <span class="n">IOController</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attack_controller</span> <span class="o">=</span> <span class="n">AttackController</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">movement_controller</span> <span class="o">=</span> <span class="n">MovementController</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_players</span> <span class="o">=</span> <span class="n">max_players</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thread_started</span> <span class="o">=</span> <span class="bp">False</span>
+
+<div class="viewcode-block" id="Game.send_message"><a class="viewcode-back" href="../../index.html#src.game.Game.send_message">[docs]</a>    <span class="k">def</span> <span class="nf">send_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; This method takes a client (who sent the message) and the message they sent &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_controller</span><span class="o">.</span><span class="n">parse_message</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="n">parsed</span><span class="p">[</span><span class="s">&#39;command&#39;</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">parsed</span><span class="p">[</span><span class="s">&#39;args&#39;</span><span class="p">]</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">calling_player</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_players</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&quot;Player &#39;</span><span class="si">%d</span><span class="s">&#39; not found&quot;</span> <span class="o">%</span> <span class="n">client</span><span class="o">.</span><span class="n">id</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">[</span><span class="n">command</span><span class="p">](</span><span class="n">calling_player</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&quot;Command &#39;</span><span class="si">%s</span><span class="s">&#39; not found. &#39;</span><span class="si">%s</span><span class="s">&#39; in actions = </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span>
+                    <span class="n">command</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Game.run"><a class="viewcode-back" href="../../index.html#src.game.Game.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; This method starts a Thread, which updates the positions on all players &quot;&quot;&quot;</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">msg</span><span class="p">(</span><span class="s">&quot;Starting thread!&quot;</span><span class="p">)</span>
+
+        <span class="n">t</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_update</span><span class="p">)</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">setDaemon</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</div>
+    <span class="k">def</span> <span class="nf">_update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; This method is being run in a Thread. It is responsible for checking the clients list and updating all player positions in that list &quot;&quot;&quot;</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">msg</span><span class="p">(</span><span class="s">&quot;Starting update loop&quot;</span><span class="p">)</span>
+        <span class="n">sent_finished_game</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_players</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">heading</span> <span class="o">==</span> <span class="n">p</span><span class="o">.</span><span class="n">requested_heading</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">movement_controller</span><span class="o">.</span><span class="n">update_position</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">heading</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_timeout</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">movement_controller</span><span class="o">.</span><span class="n">update_turning</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">requested_heading</span><span class="p">)</span>
+
+                <span class="n">state_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_controller</span><span class="o">.</span><span class="n">build_message</span><span class="p">({</span><span class="s">&#39;command&#39;</span><span class="p">:</span> <span class="s">&#39;shipState&#39;</span><span class="p">,</span>
+                    <span class="s">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">heading</span><span class="p">)]})</span>
+                <span class="c"># send this message to all players</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_players</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">inactive_players</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">victor</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">sent_finished_game</span><span class="p">:</span>
+                        <span class="n">victor_message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_controller</span><span class="o">.</span><span class="n">build_message</span><span class="p">({</span><span class="s">&#39;command&#39;</span><span class="p">:</span> <span class="s">&#39;gameFinished&#39;</span><span class="p">,</span>
+                            <span class="s">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">active_players</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">]})</span>
+                        <span class="n">reactor</span><span class="o">.</span><span class="n">callFromThread</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">broadcast</span><span class="p">,</span> <span class="n">victor_message</span><span class="p">)</span>
+                    <span class="n">reactor</span><span class="o">.</span><span class="n">callFromThread</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">broadcast</span><span class="p">,</span> <span class="n">state_msg</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">victor</span><span class="p">():</span>
+                    <span class="n">sent_finished_game</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_players</span><span class="p">:</span>
+                    <span class="n">sent_finished_game</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">update_timeout</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Game.add_player"><a class="viewcode-back" href="../../index.html#src.game.Game.add_player">[docs]</a>    <span class="k">def</span> <span class="nf">add_player</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; This method is responsible for creating a new client and wrapping it in a Player class &quot;&quot;&quot;</span>
+        <span class="n">player</span> <span class="o">=</span> <span class="n">Player</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">movement_controller</span><span class="o">.</span><span class="n">place_player</span><span class="p">(</span><span class="n">player</span><span class="p">)</span>
+        <span class="n">player</span><span class="o">.</span><span class="n">add_ship</span><span class="p">(</span><span class="n">choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_ships</span><span class="p">))</span>
+        <span class="n">player</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">sails</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active_players</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">player</span><span class="p">)</span>
+
+        <span class="c"># send init data to client</span>
+        <span class="n">map_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_controller</span><span class="o">.</span><span class="n">build_message</span><span class="p">({</span><span class="s">&#39;command&#39;</span><span class="p">:</span> <span class="s">&#39;mapSize&#39;</span><span class="p">,</span>
+            <span class="s">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">y</span><span class="p">]})</span>
+        <span class="n">wind_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_controller</span><span class="o">.</span><span class="n">build_message</span><span class="p">({</span><span class="s">&#39;command&#39;</span><span class="p">:</span> <span class="s">&#39;wind&#39;</span><span class="p">,</span>
+            <span class="s">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">wind_speed</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">wind_dir</span><span class="p">]})</span>
+        <span class="n">player_ship_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_controller</span><span class="o">.</span><span class="n">build_message</span><span class="p">({</span><span class="s">&#39;command&#39;</span><span class="p">:</span> <span class="s">&#39;playerShip&#39;</span><span class="p">,</span>
+            <span class="s">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">player</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">player</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">max_theta</span><span class="p">,</span> <span class="n">player</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">turn_radius_factor</span><span class="p">,</span>
+                <span class="n">player</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">max_ratio</span><span class="p">]})</span>
+
+        <span class="c"># send these messages to all players when they first connect</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">map_msg</span><span class="p">)</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">wind_msg</span><span class="p">)</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">player_ship_msg</span><span class="p">)</span>
+
+        <span class="n">other_players</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_players</span> <span class="k">if</span> <span class="n">client</span><span class="o">.</span><span class="n">id</span> <span class="o">!=</span> <span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">other_players</span><span class="p">:</span>
+            <span class="n">other_ship_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_controller</span><span class="o">.</span><span class="n">build_message</span><span class="p">({</span><span class="s">&#39;command&#39;</span><span class="p">:</span> <span class="s">&#39;otherShip&#39;</span><span class="p">,</span>
+                <span class="s">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">max_theta</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">turn_radius_factor</span><span class="p">,</span>
+                    <span class="n">p</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">max_ratio</span><span class="p">]})</span>
+            <span class="n">client</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">other_ship_msg</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">other_players</span><span class="p">:</span>
+            <span class="n">other_ship_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_controller</span><span class="o">.</span><span class="n">build_message</span><span class="p">({</span><span class="s">&#39;command&#39;</span><span class="p">:</span> <span class="s">&#39;otherShip&#39;</span><span class="p">,</span>
+                <span class="s">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">client</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">max_theta</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">turn_radius_factor</span><span class="p">,</span>
+                    <span class="n">p</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">max_ratio</span><span class="p">]})</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">other_ship_msg</span><span class="p">)</span>
+
+        <span class="c"># Once we receive at least 1 player, start. Don&#39;t start again after</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">thread_started</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">active_players</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">thread_started</span> <span class="o">=</span> <span class="bp">True</span>
+</div>
+<div class="viewcode-block" id="Game.remove_player"><a class="viewcode-back" href="../../index.html#src.game.Game.remove_player">[docs]</a>    <span class="k">def</span> <span class="nf">remove_player</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; This is responsible for finding the client with the client id and removing it from our clients list &quot;&quot;&quot;</span>
+        <span class="n">to_remove</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_players</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">client_id</span><span class="p">:</span>
+                <span class="n">to_remove</span> <span class="o">=</span> <span class="n">p</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">surrender_player</span><span class="p">(</span><span class="n">to_remove</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">active_players</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">to_remove</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">pass</span>
+</div>
+    <span class="k">def</span> <span class="nf">_fire_broadside</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">calling_player</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Calculates a broadside attack from the calling_player to its target</span>
+
+<span class="sd">            Returns the side that the firing player is firing from &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">target_player</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_players</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p">)</span> <span class="o">==</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">side</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack_controller</span><span class="o">.</span><span class="n">fire_broadside</span><span class="p">(</span><span class="n">calling_player</span><span class="p">,</span> <span class="n">target_player</span><span class="p">)</span>
+
+        <span class="n">damage_ratio</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">target_player</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">hit_points</span> <span class="o">/</span> <span class="n">target_player</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">max_hit_points</span><span class="p">)</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">damage_ratio</span> <span class="o">&lt;=</span> <span class="mf">0.15</span><span class="p">:</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="mi">3</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">attack_controller</span><span class="o">.</span><span class="n">alive</span><span class="p">(</span><span class="n">target_player</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">surrender_player</span><span class="p">(</span><span class="n">target_player</span><span class="p">)</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">send_to_all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">io_controller</span><span class="o">.</span><span class="n">build_message</span><span class="p">({</span><span class="s">&#39;command&#39;</span><span class="p">:</span> <span class="s">&#39;shipStatus&#39;</span><span class="p">,</span>
+            <span class="s">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">target_player</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">damage_ratio</span><span class="p">,</span> <span class="n">state</span><span class="p">]}))</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_controller</span><span class="o">.</span><span class="n">build_message</span><span class="p">({</span><span class="s">&#39;command&#39;</span><span class="p">:</span> <span class="s">&#39;cannonsFired&#39;</span><span class="p">,</span>
+            <span class="s">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">calling_player</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">side</span><span class="p">]})</span>
+
+    <span class="k">def</span> <span class="nf">_change_speed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">calling_player</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Changes the speed of the calling_player ship and sends the new speed back to the client &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">movement_controller</span><span class="o">.</span><span class="n">set_sails</span><span class="p">(</span><span class="n">calling_player</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_controller</span><span class="o">.</span><span class="n">build_message</span><span class="p">({</span><span class="s">&#39;command&#39;</span><span class="p">:</span> <span class="s">&#39;setSpeed&#39;</span><span class="p">,</span>
+            <span class="s">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">calling_player</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">calling_player</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">sails</span><span class="p">]})</span>
+
+    <span class="k">def</span> <span class="nf">_change_heading</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">calling_player</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Changes the heading of the calling_player and sends the new heading back to the client &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">movement_controller</span><span class="o">.</span><span class="n">change_heading</span><span class="p">(</span><span class="n">calling_player</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_controller</span><span class="o">.</span><span class="n">build_message</span><span class="p">({</span><span class="s">&#39;command&#39;</span><span class="p">:</span> <span class="s">&#39;setHeading&#39;</span><span class="p">,</span>
+            <span class="s">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">calling_player</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">calling_player</span><span class="o">.</span><span class="n">requested_heading</span><span class="p">]})</span>
+
+    <span class="k">def</span> <span class="nf">_game_surrender</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">calling_player</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Surrenders the calling_player and sending the ship status back to the client &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">surrender_player</span><span class="p">(</span><span class="n">calling_player</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_controller</span><span class="o">.</span><span class="n">build_message</span><span class="p">({</span><span class="s">&#39;command&#39;</span><span class="p">:</span> <span class="s">&#39;shipStatus&#39;</span><span class="p">,</span>
+            <span class="s">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">calling_player</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mi">5</span><span class="p">]})</span>
+
+<div class="viewcode-block" id="Game.surrender_player"><a class="viewcode-back" href="../../index.html#src.game.Game.surrender_player">[docs]</a>    <span class="k">def</span> <span class="nf">surrender_player</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">player</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Removes the player from the global active players list &quot;&quot;&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io_controller</span><span class="o">.</span><span class="n">build_message</span><span class="p">({</span><span class="s">&#39;command&#39;</span><span class="p">:</span> <span class="s">&#39;setSpeed&#39;</span><span class="p">,</span> <span class="s">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">player</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send_to_all</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">update_timeout</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inactive_players</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">player</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active_players</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">player</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Game.victor"><a class="viewcode-back" href="../../index.html#src.game.Game.victor">[docs]</a>    <span class="k">def</span> <span class="nf">victor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Checks if there exists 1 active player &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">active_players</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+</div>
+    <span class="k">def</span> <span class="nf">send_to_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_players</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">inactive_players</span><span class="p">:</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../../index.html">Snakes On A Boat v2.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010, Team Shroud.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+    </div>
+  </body>
+</html>

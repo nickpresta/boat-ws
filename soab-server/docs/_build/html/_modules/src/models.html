@@ -1,0 +1,162 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>src.models &mdash; Snakes On A Boat v2.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Snakes On A Boat v2.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../../index.html">Snakes On A Boat v2.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for src.models</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot; This is the module with all our model definitions &quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">math</span>
+
+<span class="kn">import</span> <span class="nn">elixir</span>
+
+<span class="kn">import</span> <span class="nn">settings</span>
+
+<span class="n">elixir</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">bind</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">DATABASE</span>
+
+<div class="viewcode-block" id="ShipType"><a class="viewcode-back" href="../../index.html#src.models.ShipType">[docs]</a><span class="k">class</span> <span class="nc">ShipType</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This class is used as an ENUM type to represent our ship types &quot;&quot;&quot;</span>
+    <span class="n">CORVETTE</span> <span class="o">=</span> <span class="s">u&quot;Corvette&quot;</span>
+    <span class="n">GALLEON</span> <span class="o">=</span> <span class="s">u&quot;Galleon&quot;</span>
+</div>
+<div class="viewcode-block" id="ShipState"><a class="viewcode-back" href="../../index.html#src.models.ShipState">[docs]</a><span class="k">class</span> <span class="nc">ShipState</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This class is used as an ENUM type to represent our ship state &quot;&quot;&quot;</span>
+    <span class="n">NORMAL</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">SUNK</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">GROUNDED</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">ON_FIRE</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">A_DRIFT</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">SURRENDERED</span> <span class="o">=</span> <span class="mi">5</span>
+</div>
+<div class="viewcode-block" id="Ship"><a class="viewcode-back" href="../../index.html#src.models.Ship">[docs]</a><span class="k">class</span> <span class="nc">Ship</span><span class="p">(</span><span class="n">elixir</span><span class="o">.</span><span class="n">Entity</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This represents our ship and all the fields it needs to store our data &quot;&quot;&quot;</span>
+    <span class="n">elixir</span><span class="o">.</span><span class="n">using_options</span><span class="p">(</span><span class="n">tablename</span><span class="o">=</span><span class="s">&quot;soab_ship&quot;</span><span class="p">)</span>
+
+    <span class="n">hit_points</span> <span class="o">=</span> <span class="n">elixir</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">elixir</span><span class="o">.</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="n">max_hit_points</span> <span class="o">=</span> <span class="n">elixir</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">elixir</span><span class="o">.</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="n">max_speed</span> <span class="o">=</span> <span class="n">elixir</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">elixir</span><span class="o">.</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="n">num_cannons</span> <span class="o">=</span> <span class="n">elixir</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">elixir</span><span class="o">.</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="n">ship_type</span> <span class="o">=</span> <span class="n">elixir</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">elixir</span><span class="o">.</span><span class="n">UnicodeText</span><span class="p">)</span> <span class="c"># From our ShipType</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">elixir</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">elixir</span><span class="o">.</span><span class="n">UnicodeText</span><span class="p">)</span>
+    <span class="n">turn_radius_factor</span> <span class="o">=</span> <span class="n">elixir</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">elixir</span><span class="o">.</span><span class="n">Float</span><span class="p">)</span>
+    <span class="n">max_ratio</span> <span class="o">=</span> <span class="n">elixir</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">elixir</span><span class="o">.</span><span class="n">Float</span><span class="p">)</span>
+    <span class="n">max_theta</span> <span class="o">=</span> <span class="n">elixir</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">elixir</span><span class="o">.</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="n">sails</span> <span class="o">=</span> <span class="n">elixir</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">elixir</span><span class="o">.</span><span class="n">Float</span><span class="p">)</span>
+
+    <span class="n">state</span> <span class="o">=</span> <span class="n">ShipState</span><span class="o">.</span><span class="n">NORMAL</span>
+
+    <span class="k">def</span> <span class="nf">max_angle_in_rads</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_theta</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">angular_velocity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">turn_factor</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">turn_factor</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">turn_radius_factor</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">hp_as_percent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hit_points</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_hit_points</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">broadside_damage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_cannons</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">take_damage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">damage</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hit_points</span> <span class="o">-=</span> <span class="n">damage</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hit_points</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hit_points</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;&lt;Ship &quot;</span><span class="si">%s</span><span class="s">&quot; (hp=</span><span class="si">%d</span><span class="s">, max_speed=</span><span class="si">%d</span><span class="s">, num_cannons=</span><span class="si">%d</span><span class="s">, type=</span><span class="si">%s</span><span class="s">)&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hit_points</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_speed</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_cannons</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ship_type</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Map"><a class="viewcode-back" href="../../index.html#src.models.Map">[docs]</a><span class="k">class</span> <span class="nc">Map</span><span class="p">(</span><span class="n">elixir</span><span class="o">.</span><span class="n">Entity</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This represents our map and all the data it needs &quot;&quot;&quot;</span>
+    <span class="n">elixir</span><span class="o">.</span><span class="n">using_options</span><span class="p">(</span><span class="n">tablename</span><span class="o">=</span><span class="s">&quot;soab_map&quot;</span><span class="p">)</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="n">elixir</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">elixir</span><span class="o">.</span><span class="n">UnicodeText</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">elixir</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">elixir</span><span class="o">.</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">elixir</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">elixir</span><span class="o">.</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="n">wind_speed</span> <span class="o">=</span> <span class="n">elixir</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">elixir</span><span class="o">.</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="n">wind_dir</span> <span class="o">=</span> <span class="n">elixir</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">elixir</span><span class="o">.</span><span class="n">Integer</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;&lt;Map &quot;</span><span class="si">%s</span><span class="s">&quot; (x=</span><span class="si">%d</span><span class="s">, y=</span><span class="si">%d</span><span class="s">, wind_speed=</span><span class="si">%d</span><span class="s">, wind_dir=</span><span class="si">%d</span><span class="s">)&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">wind_speed</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">wind_dir</span><span class="p">)</span>
+</div>
+<span class="n">elixir</span><span class="o">.</span><span class="n">setup_all</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../../index.html">Snakes On A Boat v2.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010, Team Shroud.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+    </div>
+  </body>
+</html>

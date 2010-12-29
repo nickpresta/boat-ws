@@ -1,0 +1,306 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Welcome to Snakes On A Boat’s documentation! &mdash; Snakes On A Boat v2.0 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Snakes On A Boat v2.0 documentation" href="#" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="#">Snakes On A Boat v2.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="welcome-to-snakes-on-a-boat-s-documentation">
+<h1>Welcome to Snakes On A Boat&#8217;s documentation!<a class="headerlink" href="#welcome-to-snakes-on-a-boat-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul class="simple">
+</ul>
+</div>
+<dl class="class">
+<dt id="src.server.Server">
+<em class="property">class </em><tt class="descclassname">src.server.</tt><tt class="descname">Server</tt><a class="reference internal" href="_modules/src/server.html#Server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.server.Server" title="Permalink to this definition">¶</a></dt>
+<dd><p>This server implements the Twisted line receiver server</p>
+<dl class="method">
+<dt id="src.server.Server.broadcast">
+<tt class="descname">broadcast</tt><big>(</big><em>message</em><big>)</big><a class="reference internal" href="_modules/src/server.html#Server.broadcast"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.server.Server.broadcast" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a message to the client</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.server.Server.connectionLost">
+<tt class="descname">connectionLost</tt><big>(</big><em>reason</em><big>)</big><a class="reference internal" href="_modules/src/server.html#Server.connectionLost"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.server.Server.connectionLost" title="Permalink to this definition">¶</a></dt>
+<dd><p>When a client disconnects, remove them from all lists</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.server.Server.connectionMade">
+<tt class="descname">connectionMade</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/src/server.html#Server.connectionMade"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.server.Server.connectionMade" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if we already have that client, if not, adds them to our list</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.server.Server.lineReceived">
+<tt class="descname">lineReceived</tt><big>(</big><em>line</em><big>)</big><a class="reference internal" href="_modules/src/server.html#Server.lineReceived"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.server.Server.lineReceived" title="Permalink to this definition">¶</a></dt>
+<dd><p>When we receive a line from the client, send it to our game</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="src.game.Game">
+<em class="property">class </em><tt class="descclassname">src.game.</tt><tt class="descname">Game</tt><big>(</big><em>map</em>, <em>max_players</em><big>)</big><a class="reference internal" href="_modules/src/game.html#Game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.game.Game" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Game class is responsible for delegating tasks to the appropriate controllers as well as storing Player information</p>
+<dl class="method">
+<dt id="src.game.Game.add_player">
+<tt class="descname">add_player</tt><big>(</big><em>client</em><big>)</big><a class="reference internal" href="_modules/src/game.html#Game.add_player"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.game.Game.add_player" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method is responsible for creating a new client and wrapping it in a Player class</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.game.Game.remove_player">
+<tt class="descname">remove_player</tt><big>(</big><em>client_id</em><big>)</big><a class="reference internal" href="_modules/src/game.html#Game.remove_player"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.game.Game.remove_player" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is responsible for finding the client with the client id and removing it from our clients list</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.game.Game.run">
+<tt class="descname">run</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/src/game.html#Game.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.game.Game.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method starts a Thread, which updates the positions on all players</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.game.Game.send_message">
+<tt class="descname">send_message</tt><big>(</big><em>client</em>, <em>message</em><big>)</big><a class="reference internal" href="_modules/src/game.html#Game.send_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.game.Game.send_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method takes a client (who sent the message) and the message they sent</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.game.Game.surrender_player">
+<tt class="descname">surrender_player</tt><big>(</big><em>player</em><big>)</big><a class="reference internal" href="_modules/src/game.html#Game.surrender_player"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.game.Game.surrender_player" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes the player from the global active players list</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.game.Game.victor">
+<tt class="descname">victor</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/src/game.html#Game.victor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.game.Game.victor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if there exists 1 active player</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="src.attack_controller.AttackController">
+<em class="property">class </em><tt class="descclassname">src.attack_controller.</tt><tt class="descname">AttackController</tt><big>(</big><em>distance=500</em><big>)</big><a class="reference internal" href="_modules/src/attack_controller.html#AttackController"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.attack_controller.AttackController" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="src.attack_controller.AttackController.alive">
+<tt class="descname">alive</tt><big>(</big><em>player</em><big>)</big><a class="reference internal" href="_modules/src/attack_controller.html#AttackController.alive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.attack_controller.AttackController.alive" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used to determine if a player has been destroyed</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.attack_controller.AttackController.calculate_damage">
+<tt class="descname">calculate_damage</tt><big>(</big><em>player</em>, <em>damage</em><big>)</big><a class="reference internal" href="_modules/src/attack_controller.html#AttackController.calculate_damage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.attack_controller.AttackController.calculate_damage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the damage done to a player, and updates player hitpoints</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.attack_controller.AttackController.fire_broadside">
+<tt class="descname">fire_broadside</tt><big>(</big><em>p1</em>, <em>p2</em><big>)</big><a class="reference internal" href="_modules/src/attack_controller.html#AttackController.fire_broadside"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.attack_controller.AttackController.fire_broadside" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fires a broadside; player p1 fires on player p2</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.attack_controller.AttackController.fire_cannon">
+<tt class="descname">fire_cannon</tt><big>(</big><em>p1</em>, <em>p2</em><big>)</big><a class="reference internal" href="_modules/src/attack_controller.html#AttackController.fire_cannon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.attack_controller.AttackController.fire_cannon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fires a single cannon; p1 is the firing player, and fires on p2</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.attack_controller.AttackController.in_range">
+<tt class="descname">in_range</tt><big>(</big><em>p1</em>, <em>p2</em><big>)</big><a class="reference internal" href="_modules/src/attack_controller.html#AttackController.in_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.attack_controller.AttackController.in_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determines if two players are within firing range of each other</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.attack_controller.AttackController.surrender">
+<tt class="descname">surrender</tt><big>(</big><em>player</em><big>)</big><a class="reference internal" href="_modules/src/attack_controller.html#AttackController.surrender"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.attack_controller.AttackController.surrender" title="Permalink to this definition">¶</a></dt>
+<dd><p>&#8221; player requests surrender</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.attack_controller.AttackController.update_max_speed">
+<tt class="descname">update_max_speed</tt><big>(</big><em>player</em>, <em>damage</em><big>)</big><a class="reference internal" href="_modules/src/attack_controller.html#AttackController.update_max_speed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.attack_controller.AttackController.update_max_speed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the maximum ship speed of player based on damage received</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="src.movement_controller.MovementController">
+<em class="property">class </em><tt class="descclassname">src.movement_controller.</tt><tt class="descname">MovementController</tt><big>(</big><em>map</em><big>)</big><a class="reference internal" href="_modules/src/movement_controller.html#MovementController"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.movement_controller.MovementController" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="src.movement_controller.MovementController.calculate_ship_speed">
+<tt class="descname">calculate_ship_speed</tt><big>(</big><em>player</em>, <em>wind_speed</em>, <em>wind_direction</em><big>)</big><a class="reference internal" href="_modules/src/movement_controller.html#MovementController.calculate_ship_speed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.movement_controller.MovementController.calculate_ship_speed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the ship speed, converting to positive number if neccessary</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.movement_controller.MovementController.change_heading">
+<tt class="descname">change_heading</tt><big>(</big><em>player</em>, <em>direction</em><big>)</big><a class="reference internal" href="_modules/src/movement_controller.html#MovementController.change_heading"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.movement_controller.MovementController.change_heading" title="Permalink to this definition">¶</a></dt>
+<dd><p>Changes the heading of a player given a degree (0-359)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.movement_controller.MovementController.place_player">
+<tt class="descname">place_player</tt><big>(</big><em>player</em><big>)</big><a class="reference internal" href="_modules/src/movement_controller.html#MovementController.place_player"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.movement_controller.MovementController.place_player" title="Permalink to this definition">¶</a></dt>
+<dd><p>Places each player 110m apart. This is used when we initially spawn ships</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.movement_controller.MovementController.set_sails">
+<tt class="descname">set_sails</tt><big>(</big><em>player</em>, <em>sails</em><big>)</big><a class="reference internal" href="_modules/src/movement_controller.html#MovementController.set_sails"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.movement_controller.MovementController.set_sails" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the sail ratio between 0.0 and 1.0</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.movement_controller.MovementController.update_position">
+<tt class="descname">update_position</tt><big>(</big><em>player</em>, <em>direction=0</em>, <em>time_intval=2</em><big>)</big><a class="reference internal" href="_modules/src/movement_controller.html#MovementController.update_position"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.movement_controller.MovementController.update_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the player position based on a straight line</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.movement_controller.MovementController.update_turning">
+<tt class="descname">update_turning</tt><big>(</big><em>player</em>, <em>direction=0</em><big>)</big><a class="reference internal" href="_modules/src/movement_controller.html#MovementController.update_turning"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.movement_controller.MovementController.update_turning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the players heading based on their direction</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="src.io_controller.IOController">
+<em class="property">class </em><tt class="descclassname">src.io_controller.</tt><tt class="descname">IOController</tt><a class="reference internal" href="_modules/src/io_controller.html#IOController"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.io_controller.IOController" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="src.io_controller.IOController.build_message">
+<tt class="descname">build_message</tt><big>(</big><em>message</em><big>)</big><a class="reference internal" href="_modules/src/io_controller.html#IOController.build_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.io_controller.IOController.build_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>This creates a single string to send back to the client</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.io_controller.IOController.parse_message">
+<tt class="descname">parse_message</tt><big>(</big><em>message</em><big>)</big><a class="reference internal" href="_modules/src/io_controller.html#IOController.parse_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.io_controller.IOController.parse_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method parses a plain text message and converts it to a dictionary</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="src.player.Player">
+<em class="property">class </em><tt class="descclassname">src.player.</tt><tt class="descname">Player</tt><big>(</big><em>client</em><big>)</big><a class="reference internal" href="_modules/src/player.html#Player"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.player.Player" title="Permalink to this definition">¶</a></dt>
+<dd><p>This Player class represents the player, the ship the player has, the position,
+player name, etc. Will be expanded to add teams later</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="src.models.Ship">
+<em class="property">class </em><tt class="descclassname">src.models.</tt><tt class="descname">Ship</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/src/models.html#Ship"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.models.Ship" title="Permalink to this definition">¶</a></dt>
+<dd><p>This represents our ship and all the fields it needs to store our data</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="src.models.Map">
+<em class="property">class </em><tt class="descclassname">src.models.</tt><tt class="descname">Map</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/src/models.html#Map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.models.Map" title="Permalink to this definition">¶</a></dt>
+<dd><p>This represents our map and all the data it needs</p>
+</dd></dl>
+
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
+<li><a class="reference internal" href="py-modindex.html"><em>Module Index</em></a></li>
+<li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to Snakes On A Boat&#8217;s documentation!</a><ul>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="#">Snakes On A Boat v2.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010, Team Shroud.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+    </div>
+  </body>
+</html>

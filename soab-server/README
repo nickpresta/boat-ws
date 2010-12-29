@@ -1,0 +1,17 @@
+SETUP
+----
+Run the setup_paths.sh script: source ./setup_paths.sh
+
+HOW TO RUN
+----------
+To run, type: twistd soabserver --help for information
+The server runs on port 8080 by default.
+
+HOW TO SET UP DATABASE
+----------------------
+cd to the utils/ directory and run: python create_db.py
+This will add dummy data to the database
+
+HOW TO STOP
+-----------
+Run: ./kill_server.sh from the directory you started twistd in

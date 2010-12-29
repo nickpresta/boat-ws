@@ -1,0 +1,144 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>src.server &mdash; Snakes On A Boat v2.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Snakes On A Boat v2.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../../index.html">Snakes On A Boat v2.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for src.server</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">twisted.application</span> <span class="kn">import</span> <span class="n">service</span><span class="p">,</span> <span class="n">internet</span>
+<span class="kn">from</span> <span class="nn">twisted.internet</span> <span class="kn">import</span> <span class="n">protocol</span>
+<span class="kn">from</span> <span class="nn">twisted.protocols</span> <span class="kn">import</span> <span class="n">basic</span>
+<span class="kn">from</span> <span class="nn">twisted.python</span> <span class="kn">import</span> <span class="n">log</span>
+
+<span class="kn">from</span> <span class="nn">game</span> <span class="kn">import</span> <span class="n">Game</span>
+
+<div class="viewcode-block" id="Server"><a class="viewcode-back" href="../../index.html#src.server.Server">[docs]</a><span class="k">class</span> <span class="nc">Server</span><span class="p">(</span><span class="n">basic</span><span class="o">.</span><span class="n">LineReceiver</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This server implements the Twisted line receiver server &quot;&quot;&quot;</span>
+
+    <span class="n">delimiter</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span>
+
+<div class="viewcode-block" id="Server.connectionMade"><a class="viewcode-back" href="../../index.html#src.server.Server.connectionMade">[docs]</a>    <span class="k">def</span> <span class="nf">connectionMade</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Checks if we already have that client, if not, adds them to our list &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">factory</span><span class="o">.</span><span class="n">clients</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">getPeer</span><span class="p">()</span><span class="o">.</span><span class="n">port</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">msg</span><span class="p">(</span><span class="s">&quot;Client&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s">&quot;connected&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">factory</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">factory</span><span class="o">.</span><span class="n">game</span><span class="o">.</span><span class="n">add_player</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Server.connectionLost"><a class="viewcode-back" href="../../index.html#src.server.Server.connectionLost">[docs]</a>    <span class="k">def</span> <span class="nf">connectionLost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reason</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; When a client disconnects, remove them from all lists &quot;&quot;&quot;</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">msg</span><span class="p">(</span><span class="s">&quot;Lost client&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">factory</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">factory</span><span class="o">.</span><span class="n">game</span><span class="o">.</span><span class="n">remove_player</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Server.lineReceived"><a class="viewcode-back" href="../../index.html#src.server.Server.lineReceived">[docs]</a>    <span class="k">def</span> <span class="nf">lineReceived</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; When we receive a line from the client, send it to our game &quot;&quot;&quot;</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">msg</span><span class="p">(</span><span class="s">&quot;Received:&quot;</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">line</span><span class="p">),</span> <span class="s">&quot;from client&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">factory</span><span class="o">.</span><span class="n">game</span><span class="o">.</span><span class="n">send_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">factory</span><span class="o">.</span><span class="n">clients</span><span class="p">:</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Server.broadcast"><a class="viewcode-back" href="../../index.html#src.server.Server.broadcast">[docs]</a>    <span class="k">def</span> <span class="nf">broadcast</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Send a message to the client &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">msg</span><span class="p">(</span><span class="s">&quot;Sending&quot;</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="s">&quot;to client&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">message</span> <span class="o">+</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="k">pass</span>
+</div></div>
+<div class="viewcode-block" id="MyServerFactory"><a class="viewcode-back" href="../../index.html#src.server.MyServerFactory">[docs]</a><span class="k">class</span> <span class="nc">MyServerFactory</span><span class="p">(</span><span class="n">protocol</span><span class="o">.</span><span class="n">ServerFactory</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This factory creates some instances variables that are accessible in our Server &quot;&quot;&quot;</span>
+    <span class="n">protocol</span> <span class="o">=</span> <span class="n">Server</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">service</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">service</span> <span class="o">=</span> <span class="n">service</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clients</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">game</span> <span class="o">=</span> <span class="n">Game</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">map</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">max_players</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="ServerService"><a class="viewcode-back" href="../../index.html#src.server.ServerService">[docs]</a><span class="k">class</span> <span class="nc">ServerService</span><span class="p">(</span><span class="n">service</span><span class="o">.</span><span class="n">Service</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This service runs the server and starts the service so our server can be run like a service &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">map</span><span class="p">,</span> <span class="n">max_players</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">map</span> <span class="o">=</span> <span class="nb">map</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_players</span> <span class="o">=</span> <span class="n">max_players</span>
+
+    <span class="k">def</span> <span class="nf">startService</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">service</span><span class="o">.</span><span class="n">Service</span><span class="o">.</span><span class="n">startService</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">msg</span><span class="p">(</span><span class="s">&quot;Created Game on map&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="p">,</span> <span class="s">&quot;with&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_players</span><span class="p">,</span> <span class="s">&quot;max players&quot;</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../../index.html">Snakes On A Boat v2.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010, Team Shroud.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+    </div>
+  </body>
+</html>

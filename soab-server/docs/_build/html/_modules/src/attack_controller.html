@@ -1,0 +1,145 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>src.attack_controller &mdash; Snakes On A Boat v2.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Snakes On A Boat v2.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../../index.html">Snakes On A Boat v2.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for src.attack_controller</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">math</span>
+
+<div class="viewcode-block" id="AttackController"><a class="viewcode-back" href="../../index.html#src.attack_controller.AttackController">[docs]</a><span class="k">class</span> <span class="nc">AttackController</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distance</span><span class="o">=</span><span class="mi">500</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_distance</span> <span class="o">=</span> <span class="n">distance</span>
+
+<div class="viewcode-block" id="AttackController.fire_cannon"><a class="viewcode-back" href="../../index.html#src.attack_controller.AttackController.fire_cannon">[docs]</a>    <span class="k">def</span> <span class="nf">fire_cannon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Fires a single cannon; p1 is the firing player, and fires on p2 &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_range</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">):</span>   <span class="c">#fire if ships are in range</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">calculate_damage</span><span class="p">(</span><span class="n">p2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">p1</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">p2</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="k">return</span> <span class="s">&#39;S&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s">&#39;P&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+</div>
+<div class="viewcode-block" id="AttackController.fire_broadside"><a class="viewcode-back" href="../../index.html#src.attack_controller.AttackController.fire_broadside">[docs]</a>    <span class="k">def</span> <span class="nf">fire_broadside</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Fires a broadside; player p1 fires on player p2 &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_range</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">):</span>   <span class="c"># fire if ships are in range</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">calculate_damage</span><span class="p">(</span><span class="n">p2</span><span class="p">,</span> <span class="n">p1</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">broadside_damage</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">p1</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">p2</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="k">return</span> <span class="s">&#39;S&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s">&#39;P&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+</div>
+<div class="viewcode-block" id="AttackController.in_range"><a class="viewcode-back" href="../../index.html#src.attack_controller.AttackController.in_range">[docs]</a>    <span class="k">def</span> <span class="nf">in_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Determines if two players are within firing range of each other &quot;&quot;&quot;</span>
+
+        <span class="c"># calculate horizontal and vertical distances between ships</span>
+        <span class="n">xdist</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">p1</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">p2</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">ydist</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">p1</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">p2</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">distance</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">xdist</span> <span class="o">*</span> <span class="n">xdist</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">ydist</span> <span class="o">*</span> <span class="n">ydist</span><span class="p">))</span> <span class="c"># calculate true distance between ships</span>
+        <span class="k">return</span> <span class="n">distance</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_distance</span>
+</div>
+<div class="viewcode-block" id="AttackController.calculate_damage"><a class="viewcode-back" href="../../index.html#src.attack_controller.AttackController.calculate_damage">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_damage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">player</span><span class="p">,</span> <span class="n">damage</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Calculates the damage done to a player, and updates player hitpoints &quot;&quot;&quot;</span>
+
+        <span class="c"># update hitpoints and maximum speed for player</span>
+        <span class="n">player</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">take_damage</span><span class="p">(</span><span class="n">damage</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_max_speed</span><span class="p">(</span><span class="n">player</span><span class="p">,</span> <span class="n">damage</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="AttackController.alive"><a class="viewcode-back" href="../../index.html#src.attack_controller.AttackController.alive">[docs]</a>    <span class="k">def</span> <span class="nf">alive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">player</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Used to determine if a player has been destroyed &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">player</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">hit_points</span> <span class="o">&gt;</span> <span class="mi">0</span>
+</div>
+<div class="viewcode-block" id="AttackController.surrender"><a class="viewcode-back" href="../../index.html#src.attack_controller.AttackController.surrender">[docs]</a>    <span class="k">def</span> <span class="nf">surrender</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">player</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;&quot; player requests surrender &quot;&quot;&quot;</span>
+
+        <span class="n">player</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">hit_points</span> <span class="o">=</span> <span class="mi">0</span>
+</div>
+<div class="viewcode-block" id="AttackController.update_max_speed"><a class="viewcode-back" href="../../index.html#src.attack_controller.AttackController.update_max_speed">[docs]</a>    <span class="k">def</span> <span class="nf">update_max_speed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">player</span><span class="p">,</span> <span class="n">damage</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Updates the maximum ship speed of player based on damage received &quot;&quot;&quot;</span>
+
+        <span class="n">player</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">max_speed</span> <span class="o">=</span> <span class="n">player</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">max_speed</span> <span class="o">-</span> <span class="n">damage</span>
+        <span class="k">if</span> <span class="n">player</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">max_speed</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="n">player</span><span class="o">.</span><span class="n">ship</span><span class="o">.</span><span class="n">max_speed</span> <span class="o">=</span> <span class="mi">0</span> <span class="c"># speed can&#39;t be less than 0</span>
+</pre></div></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../../index.html">Snakes On A Boat v2.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010, Team Shroud.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+    </div>
+  </body>
+</html>
