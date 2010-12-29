@@ -9,8 +9,11 @@
             $(document).ready(function() {
                 alert("Hello!");
                 if ("WebSocket" in window) {
-                    var ws = new WebSocket("ws://localhost:8080/");
+                    alert("We're in!");
+                    var ws = new WebSocket("ws://localhost:8080/ws");
+                    alert("Created socket");
                     ws.send("playerName foobar");
+                    alert("Sent data");
                     ws.onmessage = function(evt) {
                         // This should return a bunch of data
                         alert(evt.data);
