@@ -3,3 +3,4 @@
 *.pyo
 *.tmp*
 *.swp*
+*.sqlite
