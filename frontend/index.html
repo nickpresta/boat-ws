@@ -3,10 +3,11 @@
     <head>
         <title>Snakes On A Boat - Multiplayer Game</title>
         <link rel='stylesheet' href='css/main.css' type='text/css'>
-        <script src="js/jquery.js"></script>
-        <script src="js/sprite.js"></script>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+        <script type="text/javascript" src="js/sprite.js"></script>
         <script type="text/javascript">
             $(document).ready(function() {
+                alert("Hello!");
                 if ("WebSocket" in window) {
                     var ws = new WebSocket("ws://localhost:8080/");
                     ws.send("playerName foobar");

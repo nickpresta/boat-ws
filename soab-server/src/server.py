@@ -9,10 +9,14 @@ from websocket import WebSocketHandler
 from game import Game
 from models import *
 
-class Server(basic.LineReceiver):
+#class Server(basic.LineReceiver):
+class Server(WebSocketHandler):
     """ This server implements the Twisted line receiver server """
 
     delimiter = "\n"
+
+    def __init__(self):
+        print dir(self)
 
     def connectionMade(self):
         """ Checks if we already have that client, if not, adds them to our list """
@@ -29,9 +33,13 @@ class Server(basic.LineReceiver):
         self.factory.game.remove_player(self.id)
 
     def lineReceived(self, line):
+        print repr(line)
+
+    def frameReceived(self, frame):
+        print "IN HERE!!!"
         """ When we receive a line from the client, send it to our game """
-        log.msg("Received:", repr(line), "from client", self.id)
-        self.factory.game.send_message(self, line)
+        log.msg("Received:", repr(frame), "from client", self.id)
+        self.factory.game.send_message(self, frame)
 
     def broadcast(self, message):
         """ Send a message to the client """
@@ -61,38 +69,3 @@ class ServerService(service.Service):
     def startService(self):
         service.Service.startService(self)
         log.msg("Created Game on map", self.map, "with", self.max_players, "max players")
-
-class Score(http.Request):
-    def process(self):
-        self.write("<h1>SOAB Server High Scores!</h1>")
-        self.write("<table width='100%'>")
-        self.write("""<tr>
-                        <th>Name</th>
-                        <th>Wins</th>
-                        <th>Losses</th>
-                        <th>Surrenders</th>
-                      </tr>""")
-        for s in Scores.query.all():
-            self.write("""<tr>
-            <td>%s</td>
-            <td>%s/td>
-            <td>%s</td>
-            <td>%s</td></tr>""" % (s.player_name, s.wins, s.losses, s.surrenders))
-        self.write("</table>")
-        self.finish()
-
-class MyHttp(http.HTTPChannel):
-    requestFactory = Score
-
-class MyScoreFactory(http.HTTPFactory):
-    """ This factory creates some instances variables that are accessible in our Server """
-    protocol = MyHttp
-
-    def __init__(self, service):
-        self.service = service
-
-class ScoreService(service.Service):
-    """ This service runs the server and starts the service so our server can be run like a service """
-    def startService(self):
-        service.Service.startService(self)
-        log.msg("Started high score server")
